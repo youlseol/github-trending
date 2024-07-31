@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Trending Repositories</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background-color: #f4f4f4;
+			margin: 0;
+			padding: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+		h1 {
+			color: #333;
+			margin-top: 20px;
+		}
+		#repos {
+			width: 80%;
+			max-width: 800px;
+			margin: 20px 0;
+		}
+		.repo {
+			background-color: #fff;
+			padding: 20px;
+			margin-bottom: 20px;
+			border-radius: 8px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		}
+		.repo h2 {
+			margin: 0 0 10px;
+			color: #0073e6;
+		}
+		.repo p {
+			margin: 5px 0;
+			color: #555;
+		}
+		.repo a {
+			color: #0073e6;
+			text-decoration: none;
+		}
+		.repo a:hover {
+			text-decoration: underline;
+		}
+		hr {
+			border: 0;
+			height: 1px;
+			background: #ddd;
+			margin: 20px 0;
+		}
+	</style>
+</head>
+<body>
+	<h1>Trending Repositories</h1>
+	<div id="repos"></div>
+
+	<script>
+		async function getTrendingRepos(language = "python", since = "weekly") {
+			const baseUrl = "https://api.github.com";
+			const searchUrl = `${baseUrl}/search/repositories`;
+
+			// Date for the last week
+			const lastWeekDate = new Date();
+			lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+			const lastWeekStr = lastWeekDate.toISOString().split('T')[0];
+
+			const query = `created:>${lastWeekStr} language:${language}`;
+			const params = new URLSearchParams({
+				q: query,
+				sort: "stars",
+				order: "desc"
+			});
+
+			try {
+				const response = await fetch(`${searchUrl}?${params.toString()}`);
+				if (response.ok) {
+					const data = await response.json();
+					return data.items || [];
+				} else {
+					console.error(`Failed to fetch repositories: ${response.status}`);
+					return [];
+				}
+			} catch (error) {
+				console.error(`Error: ${error}`);
+				return [];
+			}
+		}
+
+		function printRepos(repos) {
+			const reposDiv = document.getElementById('repos');
+			reposDiv.innerHTML = '';
+
+			repos.forEach(repo => {
+				const repoDiv = document.createElement('div');
+				repoDiv.className = 'repo';
+				repoDiv.innerHTML = `
+					<h2>${repo.name}</h2>
+					<p><strong>Full Name:</strong> ${repo.full_name}</p>
+					<p><strong>Description:</strong> ${repo.description}</p>
+					<p><strong>Stars:</strong> ${repo.stargazers_count}</p>
+					<p><strong>URL:</strong> <a href="${repo.html_url}" target="_blank">${repo.html_url}</a></p>
+					<hr>
+				`;
+				reposDiv.appendChild(repoDiv);
+			});
+		}
+
+		document.addEventListener('DOMContentLoaded', async () => {
+			const language = "python";  // Change this to the programming language you're interested in
+			const trendingRepos = await getTrendingRepos(language);
+			printRepos(trendingRepos);
+		});
+	</script>
+</body>
+</html>
